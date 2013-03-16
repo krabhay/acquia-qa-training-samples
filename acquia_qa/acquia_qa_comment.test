@@ -1,0 +1,61 @@
+<?php
+
+class AcquiaQACommentTest extends DrupalWebTestCase {
+
+  function getInfo() {
+
+  }
+
+  function setUp() {
+    // create the node
+    // create some users with different perms.
+  }
+
+  /**
+   * Post comment.
+   *
+   * @param $node
+   *   Node to post comment on.
+   * @param $comment
+   *   Comment body.
+   * @param $subject
+   *   Comment subject.
+   */
+  function postComment($node, $comment, $subject = '') {
+    $langcode = LANGUAGE_NONE;
+    $edit = array();
+    $edit['comment_body[' . $langcode . '][0][value]'] = $comment;
+    $edit['subject'] = $subject;
+    $this->drupalPost(NULL, $edit, t('Save'));
+    
+    $match = array();
+    // Get comment ID
+    preg_match('/#comment-([0-9]+)/', $this->getURL(), $match);
+    if (isset($match[1])) {
+      return (object) array('id' => $match[1], 'subject' => $subject, 'comment' => $comment);
+    }
+  }
+
+  function testPostingComments() {
+    // Acquia writes this one.
+    $this->postComment();
+    // comment_load();
+    // assert it is there.
+  }
+
+  function testDeletingComment() {
+    $this->postComment();
+    // comment_load();
+    // assert it is there.
+    $this->deleteComment();
+    // assert it ain't there.
+    // comment_load() == false;
+  }
+
+  // Challenge:
+  function testCommentPermissions() {
+    // run the above posting method using different users.
+  }
+
+}
+  

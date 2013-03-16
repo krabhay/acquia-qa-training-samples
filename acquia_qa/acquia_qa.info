@@ -1,0 +1,4 @@
+name=Acquia QA Training 
+description= Simpletest Examples
+core = 7.x
+files[] = acquia_qa_comment.test
