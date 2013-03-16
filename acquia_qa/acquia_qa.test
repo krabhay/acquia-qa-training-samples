@@ -2,13 +2,20 @@
 
 class AcquiaQACommentTest extends DrupalWebTestCase {
 
-  function getInfo() {
-
+  public static function getInfo() {
+    return array(
+      'name' => 'Acquia QA Test',
+      'description' => 'Set of Tests to be used in Acquia QA Training',
+      'group' => 'Acquia'
+    );
   }
 
   function setUp() {
-    // create the node
-    // create some users with different perms.
+    parent::setUp('comment');
+    
+    $this->privileged_user = $this->drupalCreateUser(array('view published content', 'post comments', 'create article content'));
+    $this->lessprivilegeduser = $this->drupalCreateUser('view published content');
+    //$this->drupalLogin($this->privileged_user);
   }
 
   /**
@@ -27,7 +34,7 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
     $edit['comment_body[' . $langcode . '][0][value]'] = $comment;
     $edit['subject'] = $subject;
     $this->drupalPost(NULL, $edit, t('Save'));
-    
+
     $match = array();
     // Get comment ID
     preg_match('/#comment-([0-9]+)/', $this->getURL(), $match);
@@ -37,19 +44,10 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
   }
 
   function testPostingComments() {
-    // Acquia writes this one.
-    $this->postComment();
-    // comment_load();
-    // assert it is there.
+    
   }
 
   function testDeletingComment() {
-    $this->postComment();
-    // comment_load();
-    // assert it is there.
-    $this->deleteComment();
-    // assert it ain't there.
-    // comment_load() == false;
   }
 
   // Challenge:
@@ -58,4 +56,4 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
   }
 
 }
-  
+
