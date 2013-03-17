@@ -125,13 +125,13 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
     $langcode = LANGUAGE_NONE;
     $edit = array();
     $edit['comment_body[' . $langcode . '][0][value]'] = $this->randomName(16);
-    $edit['subject'] = $ths->randomName(8);;
+    $edit['subject'] = $this->randomName(8);;
     $this->drupalPost(NULL, $edit, t('Save'));
     $match = array();
     // Get comment ID
     preg_match('/#comment-([0-9]+)/', $this->getURL(), $match);
     if (isset($match[1])) {
-      return (object) array('id' => $match[1], 'subject' => $subject, 'comment' => $comment);
+      $comment =  (object) array('id' => $match[1]);
     }
     $comment_loaded = comment_load($comment->id);
     $this->assertTrue($this->commentExists($comment_loaded), 'Comment found.');
