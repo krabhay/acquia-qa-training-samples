@@ -4,7 +4,6 @@
  * @file
  * Tests for acquia_qa.module.
  */
-
 class AcquiaQACommentTest extends DrupalWebTestCase {
 
   public static function getInfo() {
@@ -25,32 +24,6 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
     $this->node = $this->drupalCreateNode(array('title' => 'Hello node',
       'type' => 'article'));
     $this->drupalLogout();
-  }
-
-  /**
-   * Post comment.
-   *
-   * @param $node
-   *   Node to post comment on.
-   * @param $comment
-   *   Comment body.
-   * @param $subject
-   *   Comment subject.
-   */
-  function postComment($node, $comment, $subject = '') {
-    $this->drupalGet('node/' . $node->nid);
-    $langcode = LANGUAGE_NONE;
-    $edit = array();
-    $edit['comment_body[' . $langcode . '][0][value]'] = $comment;
-    $edit['subject'] = $subject;
-    $this->drupalPost(NULL, $edit, t('Save'));
-
-    $match = array();
-    // Get comment ID
-    preg_match('/#comment-([0-9]+)/', $this->getURL(), $match);
-    if (isset($match[1])) {
-      return (object) array('id' => $match[1], 'subject' => $subject, 'comment' => $comment);
-    }
   }
 
   /**
@@ -77,22 +50,6 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
   }
 
   /**
-   * Set comment setting for article content type.
-   *
-   * @param string $name
-   *   Name of variable.
-   * @param string $value
-   *   Value of variable.
-   * @param string $message
-   *   Status message to display.
-   */
-  function setCommentSettings($name, $value, $message) {
-    variable_set($name . '_article', $value);
-    // Display status message.
-    $this->assertTrue(TRUE, $message);
-  }
-
-  /**
    * Delete comment.
    *
    * @param object $comment
@@ -107,73 +64,81 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
    * Test Posting of comments
    */
   function testPostingComments() {
-    $this->drupalLogin($this->lessprivileged_user);
 
-    $node = $this->node;
-    $this->drupalGet('node/' . $node->nid);
-    //TODO: Below assertion gives a false positive. Should check an fix
-    $this->assertNoText('Add new comment', 'User should not be shown comment form');
-
+    /**
+     *  Login as a user who is allowed to (authenticated)
+     *  Post the comment
+     *  Get the comment ID from the URL
+     *  Do a lookup in the DB using comment_load() to make sure it is there.
+     */
     $this->drupalLogin($this->privileged_user);
     $node = $this->node;
     $this->drupalGet('node/' . $node->nid);
     $this->assertText('Add new comment', 'User should  be shown comment form');
 
-    // Create three comments.
-    $comments = array();
-    $comments[] = $this->postComment($node, $this->randomName(), $this->randomName(), TRUE);
-    $comments[] = $this->postComment($node, $this->randomName(), $this->randomName(), TRUE);
-    $comments[] = $this->postComment($node, $this->randomName(), $this->randomName(), TRUE);
-    
-    //Set no of comments per page to 5 so that all 3 are available
-    $this->setCommentSettings('comment_default_per_page', 5, 'Number of comments per page set to ' . 5 . '.');
+    // Create the comment.
+    $langcode = LANGUAGE_NONE;
+    $edit = array();
+    $edit['comment_body[' . $langcode . '][0][value]'] = $comment;
+    $edit['subject'] = $subject;
+    $this->drupalPost(NULL, $edit, t('Save'));
 
-    $this->drupalGet('node/' . $node->nid);
-    $this->assertTrue($this->commentExists($comments[0]), 'Comment 1 appears on page 1.');
-    $this->assertTrue($this->commentExists($comments[1]), 'Comment 2 appears on page 1.');
-    $this->assertTrue($this->commentExists($comments[2]), 'Comment 3 appears on page 1.');
+    $match = array();
+    // Get comment ID
+    preg_match('/#comment-([0-9]+)/', $this->getURL(), $match);
+    if (isset($match[1])) {
+      $comment = (object) array('id' => $match[1], 'subject' => $subject, 'comment' => $comment);
+    }
+    //Assert to see if the comment is found on the page
+    //$this->drupalGet('node/' . $node->nid);
+    //$this->assertTrue($this->commentExists($comment), 'Comment appears on page 1.');
+    //OR
+    //Check the comment through a comment_load
+    $comment_loaded = comment_load($comment->id);
+    $this->assertTrue($this->commentExists($comment_loaded), 'Comment found.');
+
 
     $this->drupalLogout();
   }
 
+  /**
+   * Test function to check delete permissions
+   */
   function testDeletingComment() {
-    
+
+    /**
+     *  Post comment
+     *  Get comment ID
+     *  run comment_load() and make sure it's there
+     *  Delete the comment (via the form) (leave the helper, it will be too hard to write on their own).
+     *  run comment_load() and make sure it isn't there.
+     */
     //Login as privileged user to make the comment
     $this->drupalLogin($this->privileged_user);
 
     $node = $this->node;
 
-    $comments = array();
-    $comments[] = $this->postComment($node, $this->randomName(), $this->randomName(), TRUE);
-    $comments[] = $this->postComment($node, $this->randomName(), $this->randomName(), TRUE);
-    $comments[] = $this->postComment($node, $this->randomName(), $this->randomName(), TRUE);
-
     $this->drupalGet('node/' . $node->nid);
-    debug($comments);
-    $this->assertLinkByHref('comment/' . $comments[0]->id . '#comment-' . $comments[0]->id, 0, "Comment found");
-    $this->assertLinkByHref('comment/' . $comments[1]->id . '#comment-' . $comments[1]->id, 0, "Comment found");
-    $this->assertLinkByHref('comment/' . $comments[2]->id . '#comment-' . $comments[2]->id, 0, "Comment found");
-    
-    $this->drupalLogout();
-    
+    $langcode = LANGUAGE_NONE;
+    $edit = array();
+    $edit['comment_body[' . $langcode . '][0][value]'] = $comment;
+    $edit['subject'] = $subject;
+    $this->drupalPost(NULL, $edit, t('Save'));
+    $match = array();
+    // Get comment ID
+    preg_match('/#comment-([0-9]+)/', $this->getURL(), $match);
+    if (isset($match[1])) {
+      return (object) array('id' => $match[1], 'subject' => $subject, 'comment' => $comment);
+    }
+    $comment_loaded = comment_load($comment->id);
+    $this->assertTrue($this->commentExists($comment_loaded), 'Comment found.');
+
+
     //Login as comment administrator
     $this->drupalLogin($this->adminprivileged_user);
-    
-    $this->deleteComment($comments[0]);
-    $this->deleteComment($comments[1]);
-    $this->deleteComment($comments[2]);
-    
-    //Make sure the comment (links) are not available after deleting
-    $this->assertNoLinkByHref('comment/' . $comments[0]->id . '#comment-' . $comments[0]->id, 0, "Comment found");
-    $this->assertNoLinkByHref('comment/' . $comments[1]->id . '#comment-' . $comments[1]->id, 0, "Comment found");
-    $this->assertNoLinkByHref('comment/' . $comments[2]->id . '#comment-' . $comments[2]->id, 0, "Comment found");
-    
+    $this->deleteComment($comment);
+    $this->assertFalse($this->commentExists($comment_loaded), 'Comment found.');
     $this->drupalLogout();
-    
   }
 
-//  // Challenge:
-//  function testCommentPermissions() {
-//    // run the above posting method using different users.
-//  }
 }
