@@ -71,6 +71,7 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
      *  Get the comment ID from the URL
      *  Do a lookup in the DB using comment_load() to make sure it is there.
      */
+    
     $this->drupalLogin($this->privileged_user);
     $node = $this->node;
     $this->drupalGet('node/' . $node->nid);
@@ -79,16 +80,18 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
     // Create the comment.
     $langcode = LANGUAGE_NONE;
     $edit = array();
-    $edit['comment_body[' . $langcode . '][0][value]'] = $comment;
-    $edit['subject'] = $subject;
+    $edit['comment_body[' . $langcode . '][0][value]'] = $this->randomName(16);;
+    $edit['subject'] = $this->randomName(8);;
     $this->drupalPost(NULL, $edit, t('Save'));
-
+    
+    //Get the id of the comment
     $match = array();
     // Get comment ID
     preg_match('/#comment-([0-9]+)/', $this->getURL(), $match);
     if (isset($match[1])) {
       $comment = (object) array('id' => $match[1], 'subject' => $subject, 'comment' => $comment);
     }
+    
     //Assert to see if the comment is found on the page
     //$this->drupalGet('node/' . $node->nid);
     //$this->assertTrue($this->commentExists($comment), 'Comment appears on page 1.');
@@ -121,8 +124,8 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
     $this->drupalGet('node/' . $node->nid);
     $langcode = LANGUAGE_NONE;
     $edit = array();
-    $edit['comment_body[' . $langcode . '][0][value]'] = $comment;
-    $edit['subject'] = $subject;
+    $edit['comment_body[' . $langcode . '][0][value]'] = $this->randomName(16);
+    $edit['subject'] = $ths->randomName(8);;
     $this->drupalPost(NULL, $edit, t('Save'));
     $match = array();
     // Get comment ID
