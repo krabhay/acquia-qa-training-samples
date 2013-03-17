@@ -111,6 +111,7 @@ class AcquiaQACommentTest extends DrupalWebTestCase {
 
     $node = $this->node;
     $this->drupalGet('node/' . $node->nid);
+    //TODO: Below assertion gives a false positive. Should check an fix
     $this->assertNoText('Add new comment', 'User should not be shown comment form');
 
     $this->drupalLogin($this->privileged_user);
